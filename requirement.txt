@@ -1,0 +1,8 @@
+selenium==3.11.0
+tensorflow==1.8.0
+numpy==1.14.2
+scikit-learn>=0.19
+Pillow==3.4.2
+Appium-Python-Client
+scikit-image
+opencv-python
