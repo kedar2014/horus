@@ -4,7 +4,6 @@ from PIL import Image
 import numpy as np
 import io
 import os
-from appium_helper import AppiumHelper
 #from appium import webdriver
 
 
@@ -30,9 +29,9 @@ class AppFacing:
         self.driver.maximize_window()      
         #self.driver.set_window_size(2400,1792, self.driver.window_handles[0])
        elif device_type=='mobile':
-        capabilities = AppiumHelper.get_device_capabilities()
-        url = 'http://localhost:4723/wd/hub'
-        self.driver = webdriver.Remote(url, capabilities)
+        # capabilities = AppiumHelper.get_device_capabilities()
+        # url = 'http://localhost:4723/wd/hub'
+        # self.driver = webdriver.Remote(url, capabilities)
 
         #self.app = "https://www.bbc.co.uk/sport/41527965"
        #self.driver.get(self.app)
