@@ -3,7 +3,6 @@ from math import sqrt
 import tensorflow as tf
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 import io
-import classnames_id_label__pb2
 import random
 from scipy import ndarray
 from scipy.misc import imread, imsave, imresize

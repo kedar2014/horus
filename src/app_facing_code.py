@@ -13,7 +13,7 @@ class AppFacing:
        self.counter = 0
        if device_type=="pc":
         chromedriver = os.environ.get('CHROMEDRIVER_PATH')
-
+        chromedriver = "/Users/sinara01/Documents/Personal/AI/horus/chromedriver"
         if chromedriver is None:
             raise ValueError('Please set CHROMEDRIVER_PATH environment variable')
 
@@ -30,13 +30,12 @@ class AppFacing:
         #self.driver.set_window_size(2400,1792, self.driver.window_handles[0])
        elif device_type=='mobile':
         # capabilities = AppiumHelper.get_device_capabilities()
-        # url = 'http://localhost:4723/wd/hub'
+        url = 'http://localhost:4723/wd/hub'
         # self.driver = webdriver.Remote(url, capabilities)
 
         #self.app = "https://www.bbc.co.uk/sport/41527965"
-       #self.driver.get(self.app)
-       #self.current_page_url = self.driver.current_url
-
+        #self.driver.get(self.app)
+        #self.current_page_url = self.driver.current_url
 
     def get_observation_size(self):
         return self.width, self.height
