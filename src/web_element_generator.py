@@ -15,7 +15,10 @@ from random  import shuffle
 
 tf.enable_eager_execution()
 script_dir = os.path.dirname(__file__)
-dir_path = '/Users/bardek01/Personal/projects/new_try_tensorflow/models/research/models/google_1/'
+dir_path = 'data/test_1/'
+if not os.path.exists(dir_path):
+    os.makedirs(dir_path)
+    os.makedirs(dir_path + 'samples/')
 samples_dir = dir_path + 'samples/'
 abs_image_path = os.path.join(script_dir, dir_path)
 util_obj = ut.Utilities()
@@ -30,11 +33,13 @@ class WebElementGenerator:
     def get_suffix_from_element(self,element):
         
         if element.text:
-            return element.text.replace(" ","_")  
+            return element.text.replace(" ","_")
+        elif element.get_attribute("name"):
+            return element.get_attribute("name").replace(" ","_")  
         elif element.get_attribute("title"):
              return element.get_attribute("title").replace(" ","_")
         elif element.get_attribute("value"):
-            element.get_attribute("value").replace(" ","_")
+            return element.get_attribute("value").replace(" ","_")
 
     def generate_elements(self, url):
         train_writer = tf.python_io.TFRecordWriter(dir_path + 'train.record')
@@ -53,7 +58,7 @@ class WebElementGenerator:
             
             #all_visible_elements = self.driver.find_elements_by_xpath("//*[not(contains(@style,'display:none'))]")
             #all_visible_elements = self.driver.find_elements_by_xpath("//a[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //h2[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //button[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //span[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //input[not(contains(@style,'display:none')) and not(contains(@class,'story'))]")
-            all_visible_elements = self.driver.find_elements_by_xpath("//div[@id = 'hplogo']")
+            all_visible_elements = self.driver.find_elements_by_xpath("//label | //input") 
             
 
             for element in all_visible_elements:
@@ -66,12 +71,11 @@ class WebElementGenerator:
                 x2_orig = x1_orig + size['width'] * 2
                 y2_orig = y1_orig + size['height'] * 2
                 words = element.text.split()
-                if x2_orig != x1_orig and y2_orig != y1_orig and len(words) < 4:
+                if x2_orig != x1_orig and y2_orig != y1_orig:
                     
-                    # suffix = self.get_suffix_from_element(element)
-                    # if not suffix:
-                    #     continue
-                    suffix = "google"    
+                    suffix = self.get_suffix_from_element(element)
+                    if not suffix:
+                        continue
                     class_name = element.tag_name + '_' + suffix
                     
                     png = self.driver.get_screenshot_as_png()
@@ -182,5 +186,5 @@ class WebElementGenerator:
 if __name__ == '__main__':
     driver = appcode.AppFacing('pc', True).get_driver()
     web_element_generator = WebElementGenerator(driver)
-    web_element_generator.generate_elements("https://www.google.com")
+    web_element_generator.generate_elements("http://awful-valentine.com/purchase-forms/slow-ajax/")
     driver.quit()
