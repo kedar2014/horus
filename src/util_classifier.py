@@ -127,11 +127,16 @@ class Utilities:
     def bytes_list_feature(self,value):
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
-    def create_tf_example_object_detection(self,image,x1,y1,x2,y2,width, height, class_name, class_id):
+    def create_tf_example_object_detection(self,image_container,width, height):
         try:
-
-            encoded_image_string = cv2.imencode('.jpeg', image)[1].tostring()
-
+            image=image_container.image_encoded
+            test=(image_container.get_inner_objects())[0]
+            inner_object=test[0]
+            x1=inner_object[0]
+            y1=inner_object[1]
+            x2=inner_object[2]
+            y2=inner_object[3]
+            encoded_image_string = cv2.imencode('.png', image)[1].tostring()
             xmins = [x1 / width]
             xmaxs = [(x2) / width]
             ymins = [y1 / height]
@@ -200,7 +205,7 @@ class Utilities:
 
             img_original = np.asarray(img_container.image_encoded)
             for i in range(creation_count):
-                new_image_container = None
+                
                 #img =  self.random_rotation(img_original) if random.randint(0, 1) == 1 else img_original
                 img =  self.random_noise(img_original) if random.randint(0, 1) == 1 else img_original
                 #img =  self.greyscale(img) if random.randint(0, 1) == 1 else img
@@ -208,7 +213,7 @@ class Utilities:
                 #image_path = element[0] + str(i)
                 #image_path = image_path.replace(".png","")
                 #image_path = image_path + ".png"
-                new_image_container.image_encoded = img
+                new_image_container= ImageContainer(img)
                 new_image_container.add_object_bounding_box_details(img_container.get_inner_objects())
                 if np.random.choice(np.arange(0, 2), p=[0.2, 0.8]) == 1:
                     train_list.append([new_image_container,element[1],element[2]])

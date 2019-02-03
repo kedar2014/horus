@@ -1,7 +1,7 @@
 import os as os
 import traceback
 from io import BytesIO
-#from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.action_chains import ActionChains
 import tensorflow as tf
 from PIL import Image
 import numpy as np
@@ -10,7 +10,7 @@ import string_int_label_map_pb2
 import util_classifier as ut
 from scipy.misc import imread, imsave, imresize
 from random  import shuffle
-from image_container import ImgContainer
+from image_container import ImageContainer
 import cv2 as cv
 
 
@@ -58,7 +58,7 @@ class WebElementGenerator:
             self.driver.get(url)
 
             #all_visible_elements = self.driver.find_elements_by_xpath("//a[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //h2[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //button[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //span[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //input[not(contains(@style,'display:none')) and not(contains(@class,'story'))]")
-            all_visible_elements = self.driver.find_elements_by_xpath("//label | //input") 
+            all_visible_elements = self.driver.find_elements_by_xpath("//label") 
             
 
             for element in all_visible_elements:
@@ -81,11 +81,11 @@ class WebElementGenerator:
                     class_name = element.tag_name + '_' + suffix
                     class_id = util_obj.add_class_to_label_map(class_name, class_map)
 
-                    png = self.driver.get_screenshot_as_png
+                    png = self.driver.get_screenshot_as_png()
                     pil_image = Image.open(BytesIO(png))
                     image_width, image_height = pil_image.size
 
-                    img_container = ImgContainer(pil_image)
+                    img_container = ImageContainer(pil_image)
                     img_container.add_object_bounding_box_details([[x1_orig,y1_orig,x2_orig,y2_orig],class_name,class_id])
 
                     cropped_image_container = self.crop_image(img_container,1024,600)
@@ -101,6 +101,7 @@ class WebElementGenerator:
                     self.serialize_image_list(test_writer,test_list)
         except Exception as e:
                 print(e)
+                traceback(e)
 
         
         label_map_file = util_obj.open_file(labelmap_file, "wb")
@@ -198,7 +199,7 @@ class WebElementGenerator:
             print ("incorrect cropping")
 
         image = image.crop((crop_x_left,crop_y_up,crop_x_right,crop_y_down))
-        cropped_image_container = ImgContainer(image)
+        cropped_image_container = ImageContainer(image)
         cropped_image_container.add_object_bounding_box_details([[int(new_x1),int(new_y1),int(new_x2),int(new_y2)],class_name,class_id])
         return cropped_image_container 
 
