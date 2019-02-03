@@ -58,7 +58,7 @@ class WebElementGenerator:
             self.driver.get(url)
 
             #all_visible_elements = self.driver.find_elements_by_xpath("//a[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //h2[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //button[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //span[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //input[not(contains(@style,'display:none')) and not(contains(@class,'story'))]")
-            all_visible_elements = self.driver.find_elements_by_xpath("//label") 
+            all_visible_elements = self.driver.find_elements_by_xpath("//label | //input") 
             
 
             for element in all_visible_elements:

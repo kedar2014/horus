@@ -131,12 +131,15 @@ class Utilities:
         try:
             image=image_container.image_encoded
             test=(image_container.get_inner_objects())[0]
-            inner_object=test[0]
+            test1=test[0]
+            inner_object=test1[0]
+            class_name=test1[1]
+            class_id=test1[2]
             x1=inner_object[0]
             y1=inner_object[1]
             x2=inner_object[2]
             y2=inner_object[3]
-            encoded_image_string = cv2.imencode('.png', image)[1].tostring()
+            encoded_image_string = cv2.imencode('.jpeg', image)[1].tostring()
             xmins = [x1 / width]
             xmaxs = [(x2) / width]
             ymins = [y1 / height]
@@ -194,12 +197,7 @@ class Utilities:
         test_list = []
         for element in elements_list:
             
-            if np.random.choice(np.arange(0, 2), p=[0.2, 0.8]) == 1:
-                train_list.append(element)
-                print('train')
-            else:
-                test_list.append(element) 
-                print('test')  
+           
 
             img_container = element[0]
 
@@ -221,6 +219,7 @@ class Utilities:
                     test_list.append([new_image_container,element[1],element[2]])  
                     print('test')  
                 #imsave(image_path, img)
+                
         return  train_list,test_list          
    
     def random_rotation(self,image_array: ndarray):
