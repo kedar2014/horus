@@ -1,16 +1,17 @@
 import os as os
 import traceback
 from io import BytesIO
-from selenium.webdriver.common.action_chains import ActionChains
+#from selenium.webdriver.common.action_chains import ActionChains
 import tensorflow as tf
 from PIL import Image
 import numpy as np
-import cv2 as cv
 import app_facing_code as appcode
 import string_int_label_map_pb2 
 import util_classifier as ut
 from scipy.misc import imread, imsave, imresize
 from random  import shuffle
+from image_container import ImgContainer
+import cv2 as cv
 
 
 tf.enable_eager_execution()
@@ -55,8 +56,7 @@ class WebElementGenerator:
                 class_map = string_int_label_map_pb2.StringIntLabelMap()
 
             self.driver.get(url)
-            
-            #all_visible_elements = self.driver.find_elements_by_xpath("//*[not(contains(@style,'display:none'))]")
+
             #all_visible_elements = self.driver.find_elements_by_xpath("//a[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //h2[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //button[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //span[not(contains(@style,'display:none')) and not(contains(@class,'story'))] | //input[not(contains(@style,'display:none')) and not(contains(@class,'story'))]")
             all_visible_elements = self.driver.find_elements_by_xpath("//label | //input") 
             
@@ -70,35 +70,32 @@ class WebElementGenerator:
                 y1_orig = location['y'] * 2
                 x2_orig = x1_orig + size['width'] * 2
                 y2_orig = y1_orig + size['height'] * 2
-                words = element.text.split()
+                # words = element.text.split()
                 if x2_orig != x1_orig and y2_orig != y1_orig:
                     
+                    # writing class to label_map.pbtxt
+
                     suffix = self.get_suffix_from_element(element)
                     if not suffix:
                         continue
                     class_name = element.tag_name + '_' + suffix
-                    
-                    png = self.driver.get_screenshot_as_png()
+                    class_id = util_obj.add_class_to_label_map(class_name, class_map)
+
+                    png = self.driver.get_screenshot_as_png
                     pil_image = Image.open(BytesIO(png))
                     image_width, image_height = pil_image.size
-                    img, x1,y1,x2,y2 = self.crop_image(pil_image,x1_orig,y1_orig,x2_orig,y2_orig,1024,600)
-                    #pil_image = pil_image.resize((1024,600))
-                    img = np.asarray(img)
-                    
-                    original_image_path = dir_path + "images/train/" + class_name + '.png'
-                    #pil_image.save(original_image_path)
-                    self.image_with_bounding_box(samples_dir,class_name,img,x1,y1,x2,y2)
-                    
 
-                    # writing class to label_map.pbtxt
-                    class_id = util_obj.add_class_to_label_map(class_name, class_map)
+                    img_container = ImgContainer(pil_image)
+                    img_container.add_object_bounding_box_details([[x1_orig,y1_orig,x2_orig,y2_orig],class_name,class_id])
+
+                    cropped_image_container = self.crop_image(img_container,1024,600)
+                    img = np.asarray(cropped_image_container.image_encoded)
+                    
+                    self.image_with_bounding_box(samples_dir,cropped_image_container)
+                                        
                     print("class id", class_id)
                     
-                    # creating an tf.example
-                    #width = size['width'] * 2
-                    #height = size['height'] * 2 
-
-                    elements_list.append([img,x1,y1,x2,y2,image_width,image_height,class_name,class_id])
+                    elements_list.append([cropped_image_container,image_width,image_height])
                     train_list,test_list = util_obj.create_augmented_images(elements_list,200)
                     self.serialize_image_list(train_writer,train_list)
                     self.serialize_image_list(test_writer,test_list)
@@ -116,15 +113,35 @@ class WebElementGenerator:
     def serialize_image_list(self,tf_writer,images_list):
         
         for image_list in images_list:
-            example = util_obj.create_tf_example_object_detection(image_list[0],image_list[1], image_list[2],image_list[3], image_list[4], image_list[5], image_list[6],image_list[7],image_list[8])
+            example = util_obj.create_tf_example_object_detection(image_list[0],image_list[1],image_list[2])
             tf_writer.write(example.SerializeToString())
 
-    def image_with_bounding_box(self,dir,name,image,x1,y1,x2,y2):
-        #image = cv.rectangle(image, (x1,y1), (x2,y2),  (0,255,0), 3)
-        imsave(dir+name+".png",image)
+    def image_with_bounding_box(self,dir,cropped_image_container):
+        image = np.asarray(cropped_image_container.image_encoded)
+        inner_object = cropped_image_container.get_inner_objects()[0]
+        bounding_box = inner_object[0]
+        x1 = bounding_box[0]
+        y1 = bounding_box[1]
+        x2 = bounding_box[2]
+        y2 = bounding_box[3]
+        image = cv.rectangle(image, (x1,y1), (x2,y2),  (0,255,0), 3)
+        name = inner_object[1]
 
-    def crop_image(self,image,x1,y1,x2,y2,crop_width,crop_height):
-        width,height = image.size
+        imsave(dir+name+".jpeg",image)
+
+    def crop_image(self,image_container,crop_width,crop_height):
+        image = image_container.image_encoded
+        width, height = image.size
+        inner_object = image_container.get_inner_objects()[0]
+        bounding_box = inner_object[0]
+        x1 = bounding_box[0]
+        y1 = bounding_box[1]
+        x2 = bounding_box[2]
+        y2 = bounding_box[3]
+
+        class_name = inner_object[1]
+        class_id = inner_object[2]
+
         # width calculation
         mid_x = (x1+x2)/2
         element_width = x2-x1
@@ -181,7 +198,9 @@ class WebElementGenerator:
             print ("incorrect cropping")
 
         image = image.crop((crop_x_left,crop_y_up,crop_x_right,crop_y_down))
-        return image, int(new_x1),int(new_y1),int(new_x2),int(new_y2)  
+        cropped_image_container = ImgContainer(image)
+        cropped_image_container.add_object_bounding_box_details([[int(new_x1),int(new_y1),int(new_x2),int(new_y2)],class_name,class_id])
+        return cropped_image_container 
 
 if __name__ == '__main__':
     driver = appcode.AppFacing('pc', True).get_driver()
